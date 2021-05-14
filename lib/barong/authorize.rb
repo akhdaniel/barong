@@ -29,7 +29,17 @@ module Barong
       auth_type = 'cookie'
       auth_type = 'api_key' if api_key_headers?
       auth_owner = method("#{auth_type}_owner").call
-      'Bearer ' + codec.encode(auth_owner.as_payload) # encoded user info
+
+      impersonates = {}
+      if session[:oid] && session[:aid]
+        impersonates = {
+          oid: session[:oid],
+          aid: session[:aid],
+          account_role: session[:account_role]
+        }
+      end
+      payload = auth_owner.as_payload.merge(impersonates)
+      'Bearer ' + codec.encode(payload) # encoded user info
     end
 
     # cookies validations
