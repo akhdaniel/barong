@@ -2,6 +2,7 @@
 
 class Organization < ApplicationRecord
   has_one :organization
+  has_many :memberships
 end
 
 # == Schema Information
