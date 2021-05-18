@@ -27,14 +27,14 @@ module API::V2
         csrf_token
       end
 
-      def open_impersonate_session(user, impersonate)
+      def open_switch_session(user, switch)
         csrf_token = SecureRandom.hex(10)
         expire_time = Time.now.to_i + Barong::App.config.session_expire_time
         session.merge!(
           "uid": user.uid,
-          "oid": impersonate[:oid],
-          "aid": impersonate[:aid],
-          "account_role": impersonate[:account_role],
+          "oid": switch[:oid],
+          "aid": switch[:aid],
+          "account_role": switch[:account_role],
           "user_ip": remote_ip,
           "user_agent": request.env['HTTP_USER_AGENT'],
           "expire_time": expire_time,
@@ -140,8 +140,8 @@ module API::V2
                         })
       end
 
-      def publish_session_impersonate(user, impersonate)
-        payload = user.as_json_for_event_api.merge(impersonate)
+      def publish_session_switch(user, switch)
+        payload = user.as_json_for_event_api.merge(switch)
         EventAPI.notify('system.session.create',
                         record: {
                           user: payload,

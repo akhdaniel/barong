@@ -30,15 +30,15 @@ module Barong
       auth_type = 'api_key' if api_key_headers?
       auth_owner = method("#{auth_type}_owner").call
 
-      impersonates = {}
+      switchs = {}
       if session[:oid] && session[:aid]
-        impersonates = {
+        switchs = {
           oid: session[:oid],
           aid: session[:aid],
           account_role: session[:account_role]
         }
       end
-      payload = auth_owner.as_payload.merge(impersonates)
+      payload = auth_owner.as_payload.merge(switchs)
       'Bearer ' + codec.encode(payload) # encoded user info
     end
 

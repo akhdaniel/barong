@@ -137,9 +137,9 @@ module API::V2
           end
         end
 
-        namespace :impersonate do
-          desc 'Impersonated user data',
-               success: { code: 200, message: 'Session was impersonated' },
+        namespace :switch do
+          desc 'Switch user session',
+               success: { code: 200, message: 'Session was switched' },
                failure: [
                  { code: 400, message: 'Required params are missing' },
                  { code: 422, message: 'Validation errors' }
@@ -161,43 +161,43 @@ module API::V2
                                 .select('memberships.*,organizations.organization_id').first
             error!({ errors: ['identity.member.not_found'] }, 404) unless account
 
-            # Set oid as aid for default case of impersonated as organization admin
+            # Set oid as aid for default case of switched as organization admin
             oid = aid
             unless account.organization_id.nil?
               organization = Organization.find(account.organization_id)
               error!({ errors: ['identity.organization.not_found'] }, 404) unless organization
 
-              # Set oid as sub-organization in case of impersonated as organization account
+              # Set oid as sub-organization in case of switched as organization account
               oid = organization.oid
             end
 
-            activity_record(user: user.id, action: 'impersonate::orgnization', result: 'succeed', topic: 'session')
+            activity_record(user: user.id, action: 'switch::orgnization', result: 'succeed', topic: 'session')
 
             Barong::RedisSession.delete(user.uid, session.id)
             session.destroy
 
-            impersonate = {
+            switch = {
               oid: oid,
               aid: aid,
               account_role: account.role
             }
-            csrf_token = open_impersonate_session(user, impersonate)
-            publish_session_impersonate(user, impersonate)
+            csrf_token = open_switch_session(user, switch)
+            publish_session_switch(user, switch)
 
             present user, with: API::V2::Entities::UserWithFullInfo, csrf_token: csrf_token
             status(200)
           end
 
-          desc 'Destroy impersonated session',
+          desc 'Destroy switched session',
              failure: [
                { code: 404, message: 'Record is not found' }
              ],
-             success: { code: 200, message: 'Impersonated was destroyed' }
+             success: { code: 200, message: 'Switched was destroyed' }
           delete do
             user = User.find_by(uid: session[:uid])
             error!({ errors: ['identity.session.not_found'] }, 404) unless user
 
-            activity_record(user: user.id, action: 'impersonate::user', result: 'succeed', topic: 'session')
+            activity_record(user: user.id, action: 'switch::user', result: 'succeed', topic: 'session')
 
             Barong::RedisSession.delete(user.uid, session.id)
             session.destroy
