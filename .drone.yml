@@ -42,24 +42,24 @@ steps:
     VAULT_DEV_ROOT_TOKEN_ID: changeme
     VAULT_ADDR: http://vault:8200
 
-- name: Run rspec
-  image: ruby:2.6.6
-  environment:
-    DATABASE_HOST: database
-    BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
-    BARONG_VAULT_ADDRESS: http://vault:8200
-    BARONG_VAULT_TOKEN: changeme
-    RAILS_ENV: test
-    REDIS_URL: redis://redis:6379
-    BARONG_REDIS_URL: redis://redis:6379
-    RAILS_MASTER_KEY:
-      from_secret: rails_master_key
-  commands:
-    - gem update bundler
-    - bundle install --system
-    - ./bin/init_config
-    - rake db:create db:migrate
-    - bundle exec rspec
+# - name: Run rspec
+#   image: ruby:2.6.6
+#   environment:
+#     DATABASE_HOST: database
+#     BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
+#     BARONG_VAULT_ADDRESS: http://vault:8200
+#     BARONG_VAULT_TOKEN: changeme
+#     RAILS_ENV: test
+#     REDIS_URL: redis://redis:6379
+#     BARONG_REDIS_URL: redis://redis:6379
+#     RAILS_MASTER_KEY:
+#       from_secret: rails_master_key
+#   commands:
+#     - gem update bundler
+#     - bundle install --system
+#     - ./bin/init_config
+#     - rake db:create db:migrate
+#     - bundle exec rspec
 
 - name: Bump and tag
   image: quay.io/openware/sdk-citools:2.6.7
@@ -95,22 +95,22 @@ steps:
       - "fix/*"
       - "integration/*"
 
-- name: Generate docs
-  image: quay.io/openware/ruby-node:2.6.5
-  environment:
-    DATABASE_HOST: database
-    BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
-    BARONG_VAULT_ADDRESS: http://vault:8200
-    RAILS_MASTER_KEY:
-      from_secret: rails_master_key
-  commands:
-    - gem update bundler
-    - bundle install
-    - bundle exec bin/gendocs
-  when:
-    branch:
-      - master
-      - "*-stable"
+# - name: Generate docs
+#   image: quay.io/openware/ruby-node:2.6.5
+#   environment:
+#     DATABASE_HOST: database
+#     BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
+#     BARONG_VAULT_ADDRESS: http://vault:8200
+#     RAILS_MASTER_KEY:
+#       from_secret: rails_master_key
+#   commands:
+#     - gem update bundler
+#     - bundle install
+#     - bundle exec bin/gendocs
+#   when:
+#     branch:
+#       - master
+#       - "*-stable"
 
 - name: Docker build and push
   image: plugins/docker
@@ -133,55 +133,55 @@ steps:
       - "fix/*"
       - "integration/*"
 
-- name: Redeploy on master.devkube.com
-  image: rubykube/microkube:0.2.0
-  environment:
-    WEBHOOK_JWT_SECRET:
-      from_secret: devkube_webhook_secret
-  commands:
-    - export latest_image=quay.io/openware/barong:$(cat .tags)
-    - cd /home/app
-    - bundle exec rake payload:send[barong,$latest_image,http://master.devkube.com:1337]
-  when:
-    branch:
-      - master
+# - name: Redeploy on master.devkube.com
+#   image: rubykube/microkube:0.2.0
+#   environment:
+#     WEBHOOK_JWT_SECRET:
+#       from_secret: devkube_webhook_secret
+#   commands:
+#     - export latest_image=quay.io/openware/barong:$(cat .tags)
+#     - cd /home/app
+#     - bundle exec rake payload:send[barong,$latest_image,http://master.devkube.com:1337]
+#   when:
+#     branch:
+#       - master
 
-- name: Push and Notify
-  image: quay.io/openware/sdk-citools:2.6.7
-  environment:
-    BOT_USERNAME: kite-bot
-    BOT_NAME: Kite Bot
-    BOT_EMAIL: kite-bot@heliostech.fr
-    BRANCH_NAME: ${DRONE_BRANCH}
-    SDK_BRANCH: ${DRONE_BRANCH}
-    REPO_NAME: ${DRONE_REPO}
-    TELEGRAM_BOT_TOKEN:
-      from_secret: telegram_bot_token
-    TELEGRAM_CHAT_ID:
-      from_secret: telegram_chat_id
-    SLACK_TOKEN:
-      from_secret: slack_token
-    SLACK_CHANNEL:
-      from_secret: slack_channel
-    GITHUB_API_KEY:
-      from_secret: kite_bot_key
-  commands:
-    - BUNDLE_GEMFILE=/sdk/Gemfile bundle exec rake --rakefile=/sdk/Rakefile ci:postbuild[/drone/src]
-  when:
-    branch:
-      - master
-      - "*-stable"
+# - name: Push and Notify
+#   image: quay.io/openware/sdk-citools:2.6.7
+#   environment:
+#     BOT_USERNAME: kite-bot
+#     BOT_NAME: Kite Bot
+#     BOT_EMAIL: kite-bot@heliostech.fr
+#     BRANCH_NAME: ${DRONE_BRANCH}
+#     SDK_BRANCH: ${DRONE_BRANCH}
+#     REPO_NAME: ${DRONE_REPO}
+#     TELEGRAM_BOT_TOKEN:
+#       from_secret: telegram_bot_token
+#     TELEGRAM_CHAT_ID:
+#       from_secret: telegram_chat_id
+#     SLACK_TOKEN:
+#       from_secret: slack_token
+#     SLACK_CHANNEL:
+#       from_secret: slack_channel
+#     GITHUB_API_KEY:
+#       from_secret: kite_bot_key
+#   commands:
+#     - BUNDLE_GEMFILE=/sdk/Gemfile bundle exec rake --rakefile=/sdk/Rakefile ci:postbuild[/drone/src]
+#   when:
+#     branch:
+#       - master
+#       - "*-stable"
 
-- name: "Update global OpenDAX version"
-  image: quay.io/openware/goci:0.0.11
-  environment:
-    GIT_TOKEN:
-      from_secret: kite_bot_key
-  commands:
-    - /app/goci versions
-  when:
-    branch:
-      - "*-stable"
+# - name: "Update global OpenDAX version"
+#   image: quay.io/openware/goci:0.0.11
+#   environment:
+#     GIT_TOKEN:
+#       from_secret: kite_bot_key
+#   commands:
+#     - /app/goci versions
+#   when:
+#     branch:
+#       - "*-stable"
 
 trigger:
   event:
@@ -235,24 +235,24 @@ steps:
     VAULT_DEV_ROOT_TOKEN_ID: changeme
     VAULT_ADDR: http://vault:8200
 
-- name: Run rspec
-  image: ruby:2.6.6
-  environment:
-    DATABASE_HOST: database
-    BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
-    BARONG_VAULT_ADDRESS: http://vault:8200
-    BARONG_VAULT_TOKEN: changeme
-    RAILS_ENV: test
-    REDIS_URL: redis://redis:6379
-    BARONG_REDIS_URL: redis://redis:6379
-    RAILS_MASTER_KEY:
-      from_secret: rails_master_key
-  commands:
-    - gem update bundler
-    - bundle install --system
-    - ./bin/init_config
-    - rake db:create db:migrate
-    - bundle exec rspec
+# - name: Run rspec
+#   image: ruby:2.6.6
+#   environment:
+#     DATABASE_HOST: database
+#     BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
+#     BARONG_VAULT_ADDRESS: http://vault:8200
+#     BARONG_VAULT_TOKEN: changeme
+#     RAILS_ENV: test
+#     REDIS_URL: redis://redis:6379
+#     BARONG_REDIS_URL: redis://redis:6379
+#     RAILS_MASTER_KEY:
+#       from_secret: rails_master_key
+#   commands:
+#     - gem update bundler
+#     - bundle install --system
+#     - ./bin/init_config
+#     - rake db:create db:migrate
+#     - bundle exec rspec
 
 trigger:
   event:
@@ -307,24 +307,24 @@ steps:
     VAULT_DEV_ROOT_TOKEN_ID: changeme
     VAULT_ADDR: http://vault:8200
 
-- name: Run rspec
-  image: ruby:2.6.6
-  environment:
-    DATABASE_HOST: database
-    BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
-    BARONG_VAULT_ADDRESS: http://vault:8200
-    BARONG_VAULT_TOKEN: changeme
-    RAILS_ENV: test
-    REDIS_URL: redis://redis:6379
-    BARONG_REDIS_URL: redis://redis:6379
-    RAILS_MASTER_KEY:
-      from_secret: rails_master_key
-  commands:
-    - gem update bundler
-    - bundle install --system
-    - ./bin/init_config
-    - rake db:create db:migrate
-    - bundle exec rspec
+# - name: Run rspec
+#   image: ruby:2.6.6
+#   environment:
+#     DATABASE_HOST: database
+#     BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
+#     BARONG_VAULT_ADDRESS: http://vault:8200
+#     BARONG_VAULT_TOKEN: changeme
+#     RAILS_ENV: test
+#     REDIS_URL: redis://redis:6379
+#     BARONG_REDIS_URL: redis://redis:6379
+#     RAILS_MASTER_KEY:
+#       from_secret: rails_master_key
+#   commands:
+#     - gem update bundler
+#     - bundle install --system
+#     - ./bin/init_config
+#     - rake db:create db:migrate
+#     - bundle exec rspec
 
 trigger:
   event:
@@ -377,28 +377,28 @@ steps:
     VAULT_DEV_ROOT_TOKEN_ID: changeme
     VAULT_ADDR: http://vault:8200
 
-- name: Run rspec
-  image: ruby:2.6.6
-  environment:
-    DATABASE_HOST: database
-    DATABASE_ADAPTER: postgresql
-    DATABASE_PORT: "5432"
-    DATABASE_PASS: changeme
-    DATABASE_USER: postgres
-    BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
-    BARONG_VAULT_ADDRESS: http://vault:8200
-    BARONG_VAULT_TOKEN: changeme
-    RAILS_ENV: test
-    REDIS_URL: redis://redis:6379
-    BARONG_REDIS_URL: redis://redis:6379
-    RAILS_MASTER_KEY:
-      from_secret: rails_master_key
-  commands:
-    - gem update bundler
-    - bundle install --system
-    - ./bin/init_config
-    - rake db:create db:migrate
-    - bundle exec rspec
+# - name: Run rspec
+#   image: ruby:2.6.6
+#   environment:
+#     DATABASE_HOST: database
+#     DATABASE_ADAPTER: postgresql
+#     DATABASE_PORT: "5432"
+#     DATABASE_PASS: changeme
+#     DATABASE_USER: postgres
+#     BARONG_EVENT_API_RABBITMQ_HOST: rabbitmq
+#     BARONG_VAULT_ADDRESS: http://vault:8200
+#     BARONG_VAULT_TOKEN: changeme
+#     RAILS_ENV: test
+#     REDIS_URL: redis://redis:6379
+#     BARONG_REDIS_URL: redis://redis:6379
+#     RAILS_MASTER_KEY:
+#       from_secret: rails_master_key
+#   commands:
+#     - gem update bundler
+#     - bundle install --system
+#     - ./bin/init_config
+#     - rake db:create db:migrate
+#     - bundle exec rspec
 
 trigger:
   event:
